@@ -1,0 +1,7 @@
+mpyc
+pandas
+openpyxl
+
+# for mpyc
+numpy
+gmpy2
