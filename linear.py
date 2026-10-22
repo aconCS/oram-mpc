@@ -23,7 +23,7 @@ async def load_private(path, key_col, val_col, owner=0):
     return K, V
 
 def lookup_by_index(V, i):
-    return mpc.in_prod(unit_vec(i, len(V)), V)
+    return mpc.in_prod(mpc.unit_vector(i, len(V)), V)
 
 def lookup_by_key(K, V, key):
     # assume unique keys - like BSN
@@ -41,7 +41,8 @@ async def main():
 
     K, V = await load_private('table.xlsx', 'bsn', 'blood_code', owner=0) #table owned by party 0
 
-    q = mpc.input(secint(125521376), senders=0) # query from party 0
+    #input the BSN here
+    q = mpc.input(secint(192692124), senders=0) # query from party 0
 
     val, found = lookup_by_key(K, V, q)
     print('value:', await mpc.output(val), 'found:', await mpc.output(found))
