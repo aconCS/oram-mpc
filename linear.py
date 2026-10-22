@@ -13,11 +13,13 @@ async def load_private(path, key_col, val_col, owner=0):
     # table owned by one party, everyone gets secret shared columns
     if mpc.pid == owner:
         keys, vals = read_columns(path, key_col, val_col)
-        n = len(keys)
     else:
         keys = vals = None
-        n = None
-    n = await mpc.transfer(n, senders=owner)          
+    return await share_columns(keys, vals, owner)
+
+async def share_columns(keys, vals, owner=0):
+    # keys/vals only need to be real on the owner, other parties pass None
+    n = await mpc.transfer(len(keys) if mpc.pid == owner else None, senders=owner)
     if mpc.pid != owner:
         keys = vals = [0] * n                   # placeholders, ignored
     K = mpc.input([secint(k) for k in keys], senders=owner)
@@ -106,4 +108,5 @@ async def main():
         print("Index out of range.")
     await mpc.shutdown()
 
-mpc.run(main())
+if __name__ == '__main__':
+    mpc.run(main())
