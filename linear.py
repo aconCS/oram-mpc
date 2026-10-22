@@ -1,8 +1,6 @@
 import pandas as pd
 from mpyc.runtime import mpc
 
-BLOOD = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-']
-
 secint = mpc.SecInt(32)
 
 def read_columns(path, key_col, val_col):
@@ -27,10 +25,17 @@ async def load_private(path, key_col, val_col, owner=0):
 def lookup_by_index(V, i):
     return mpc.in_prod(mpc.unit_vector(i, len(V)), V)
 
+def write_by_index(V,i,new_val):
+    e = mpc.unit_vector(i, len(V))
+    old = mpc.in_prod(e, V)
+    delta = new_val - old
+    return [v + delta * ej for v, ej in zip(V, e)]
+
 def lookup_by_key(K, V, key):
     # assume unique keys - like BSN
-    e = [key == k for k in K]            # n secure equality tests
-    return mpc.in_prod(e, V), mpc.sum(e)  # 0 if key absent
+    e = [key == k for k in K]         # n secure equality tests
+    corrector = mpc.sum(e) - 1        #will correct outpu to -1 if bns not found
+    return mpc.in_prod(e, V) + corrector, mpc.sum(e)  
 
 def write_by_key(K, V, key, new_val):
     e = [key == k for k in K]
@@ -40,7 +45,6 @@ def write_by_key(K, V, key, new_val):
 
 async def main():
     await mpc.start()
-
 
     K, V = await load_private('table.xlsx', 'bsn', 'blood_code', owner=0) #table owned by party 0
 
