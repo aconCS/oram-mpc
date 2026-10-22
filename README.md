@@ -24,10 +24,25 @@ The initial table consists only of 100 entries of
 - blood_type:  as one of 8 types
 - blood_code: integer encoding the blood type (secint can't hold strings)
 
+## Running the simulation
+To run linear.py, open three separate terminals from the project root & paste these three separate commands:
+
+Terminal 1
+```bash
+python linear.py -M3 -I0
+```
+
+Terminal 2
+```bash
+python linear.py -M3 -I1
+```
+
+Terminal 3
+``` bash
+python linear.py -M3 -I2
+```
+
 ## TODOs 
-- easy one : array with blood types is added in py file, translate the codes in output to actual types
 - check bigger datasets (and write down size + time), 
-- way to securely input query with bsn from the terminal
-- value 'v' written to array A should laso use a query - one part supplies mpc.input
 - unit tests ?, 
 - simulation of real network (termianls with different-I ids) check here [https://mpyc.readthedocs.io/en/latest/cli.html]
