@@ -6,7 +6,7 @@ BLOOD = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-']
 secint = mpc.SecInt(32)
 
 def read_columns(path, key_col, val_col):
-    df = pd.read_excel(path)
+    df = pd.read_csv(path)
     return df[key_col].astype(int).tolist(), df[val_col].astype(int).tolist()
 
 async def load_private(path, key_col, val_col, owner=0):
@@ -57,7 +57,7 @@ async def main():
 
     q_party = 0 #the one that makes queries - changed during testing
 
-    K, V = await load_private('table.xlsx', 'bsn', 'blood_code', owner=0) #table owned by party 0
+    K, V = await load_private('full_table.csv', 'bsn', 'blood_code', owner=0) #table owned by party 0
 
     print("1# Testing look up by key (BSN)...")
     bsn_look = int(input('BSN of requested patient: ')) if mpc.pid == q_party else None
