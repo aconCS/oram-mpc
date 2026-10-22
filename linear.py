@@ -1,6 +1,8 @@
 import pandas as pd
 from mpyc.runtime import mpc
 
+BLOOD = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-']
+
 secint = mpc.SecInt(32)
 
 def read_columns(path, key_col, val_col):
@@ -39,6 +41,7 @@ def write_by_key(K, V, key, new_val):
 async def main():
     await mpc.start()
 
+
     K, V = await load_private('table.xlsx', 'bsn', 'blood_code', owner=0) #table owned by party 0
 
     #input the BSN here
@@ -47,7 +50,10 @@ async def main():
     val, found = lookup_by_key(K, V, q)
     print('value:', await mpc.output(val), 'found:', await mpc.output(found))
 
-    V = write_by_key(K, V, q, secint(123))
+    val2 = lookup_by_index(V, secint(31)) #change index here
+    print('value:', await mpc.output(val2))
+
+    V = write_by_key(K, V, q, secint(123)) #choose what value is written (123 for test)
     print('table:', await mpc.output(V))
     await mpc.shutdown()
 

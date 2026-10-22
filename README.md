@@ -25,7 +25,9 @@ The initial table consists only of 100 entries of
 - blood_code: integer encoding the blood type (secint can't hold strings)
 
 ## TODOs 
+- easy one : array with blood types is added in py file, translate the codes in output to actual types
 - check bigger datasets (and write down size + time), 
 - way to securely input query with bsn from the terminal
+- value 'v' written to array A should laso use a query - one part supplies mpc.input
 - unit tests ?, 
 - simulation of real network (termianls with different-I ids) check here [https://mpyc.readthedocs.io/en/latest/cli.html]
