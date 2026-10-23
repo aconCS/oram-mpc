@@ -1,7 +1,10 @@
 """Benchmark Linear ORAM: time, bytes, rounds and memory per operation.
 
+Table sizes are 10^0, 10^1, ..., 10^max-exp, taken as the first n rows of
+full_table.csv (or give them explicitly with --sizes).
+
 Run all three parties locally (parties 1 and 2 are spawned automatically):
-    python benchmark.py -M3 --sizes 10 100 1000
+    python benchmark.py -M3 --max-exp 3
 
 or one terminal per party, as with linear.py:
     python benchmark.py -M3 -I0 --sizes 10 100
@@ -21,18 +24,15 @@ import statistics
 from mpyc.runtime import mpc
 
 import metrics
-from linear import (BLOOD, secint, share_columns, lookup_by_index, write_by_index,
-                    lookup_by_key, write_by_key)
+from linear import (BLOOD, secint, read_columns, share_columns, lookup_by_index,
+                    write_by_index, lookup_by_key, write_by_key)
 
 OWNER = 0     # holds the table
 CLIENT = 0    # makes the queries
 FIELDS = ['n', 'op', 'time', 'bytes', 'messages', 'rounds', 'peak_mem']
 
 
-def synthetic_table(n, rng):
-    keys = rng.sample(range(100_000_000, 1_000_000_000), n)   # unique 9 digit BSNs
-    vals = [rng.randrange(len(BLOOD)) for _ in range(n)]
-    return keys, vals
+TABLE = 'full_table.csv'
 
 
 def secret(value):
@@ -52,8 +52,13 @@ OPS = {
 async def bench(args):
     rows = []
     rng = random.Random(args.seed)
+    if mpc.pid == OWNER:   # only the owner reads the table, once, up to the largest size
+        all_keys, all_vals = read_columns(args.table, 'bsn', 'blood_code', nrows=max(args.sizes))
     for n in args.sizes:
-        keys, vals = synthetic_table(n, rng)   # same on every party (same seed), only OWNER's is used
+        if mpc.pid == OWNER:
+            keys, vals = all_keys[:n], all_vals[:n]
+        else:
+            keys = vals = [0] * n   # placeholders, ignored by share_columns and secret()
 
         async with metrics.Measure(args.memory) as m:
             K, V = await share_columns(keys, vals, owner=OWNER)
@@ -85,8 +90,11 @@ def fmt(row):
 
 async def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument('--sizes', type=int, nargs='+', default=[10, 100, 1000],
-                        help='table sizes n to benchmark')
+    parser.add_argument('--max-exp', type=int, default=3,
+                        help='benchmark sizes 10^0 .. 10^max-exp')
+    parser.add_argument('--sizes', type=int, nargs='+',
+                        help='explicit table sizes n, overrides --max-exp')
+    parser.add_argument('--table', default=TABLE, help='CSV with bsn and blood_code columns')
     parser.add_argument('--ops', nargs='+', choices=list(OPS), default=list(OPS))
     parser.add_argument('--repeat', type=int, default=3, help='runs per op, median time reported')
     parser.add_argument('--seed', type=int, default=1)
@@ -94,6 +102,8 @@ async def main():
                         help='skip tracemalloc (it slows Python down, so times are more accurate)')
     parser.add_argument('--csv', help='write results to this CSV file (party 0)')
     args = parser.parse_args()
+    if args.sizes is None:
+        args.sizes = [10**k for k in range(args.max_exp + 1)]
 
     metrics.install()
     await mpc.start()

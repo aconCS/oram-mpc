@@ -5,8 +5,8 @@ BLOOD = ['O+', 'A+', 'B+', 'AB+', 'O-', 'A-', 'B-', 'AB-']
 
 secint = mpc.SecInt(32)
 
-def read_columns(path, key_col, val_col):
-    df = pd.read_csv(path)
+def read_columns(path, key_col, val_col, nrows=None):
+    df = pd.read_csv(path, nrows=nrows)
     return df[key_col].astype(int).tolist(), df[val_col].astype(int).tolist()
 
 async def load_private(path, key_col, val_col, owner=0):

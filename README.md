@@ -42,6 +42,45 @@ Terminal 3
 python linear.py -M3 -I2
 ```
 
+## Benchmarking
+
+`benchmark.py` measures every operation (setup, lookup/write by index, lookup/write by key)
+on tables of growing size. Each table is the first n rows of `full_table.csv`, with
+n = 1, 10, 100, ..., 10^max-exp.
+
+Make sure the real CSV is there (it is stored with Git LFS):
+```bash
+git lfs pull
+```
+
+Run all three parties in one terminal (parties 1 and 2 are spawned automatically):
+```bash
+python benchmark.py -M3 --max-exp 3
+```
+
+Useful options:
+
+| option | meaning | default |
+|---|---|---|
+| `--max-exp k` | sizes 10^0 .. 10^k | 3 |
+| `--sizes 16 32 64` | explicit sizes, overrides `--max-exp` | |
+| `--ops lookup_by_key ...` | only run these operations | all four |
+| `--repeat r` | runs per operation, median time is reported | 3 |
+| `--no-memory` | skip memory tracking (more accurate times) | |
+| `--csv results.csv` | save the results (written by party 0) | |
+| `--table file.csv` | another table with `bsn` and `blood_code` columns | `full_table.csv` |
+
+Example, saving results for sizes up to 10 000:
+```bash
+python benchmark.py -M3 --max-exp 4 --no-memory --csv results.csv
+```
+
+Output columns: `time` (slowest party, ms), `bytes` and `messages` (sum over all parties),
+`rounds` (sequential communication rounds), `peak` (largest Python heap growth of any party).
+
+Key operations do n secure comparisons, so they get slow fast: about 1 s at n = 1000 on one
+machine, roughly 10x more per step. Start small and raise `--max-exp` step by step.
+
 ## TODOs 
 - check bigger datasets (and write down size + time), 
 - unit tests ?, 
