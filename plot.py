@@ -21,7 +21,7 @@ METRICS = [
     ('time_ms',  'Time (ms)',             True),
     ('sent_kib', 'Data sent (KiB)',       True),
     ('rounds',   'Communication rounds',  False),
-    ('peak_kib', 'Peak memory (KiB)',     True),
+    ('peak_kib', 'Peak memory (KiB)',     False),
 ]
 
 # fixed colour + marker per op, so an op looks the same in every chart
@@ -55,8 +55,9 @@ def style_axes(ax, title, log_y):
     ax.set_xscale('log')
     if log_y:
         ax.set_yscale('log')
-    else:   # counts: start at 0, whole numbers only
-        ax.set_ylim(bottom=0)
+    else:
+        ax.set_yscale('linear')
+        ax.set_ylim(0, None)
         ax.yaxis.get_major_locator().set_params(integer=True)
     ax.set_xlabel('table size n (rows)', color=TEXT_2)
     ax.grid(True, which='major', color=GRID, linewidth=0.8)
@@ -80,6 +81,8 @@ def draw(ax, df, column, title, log_y):
             ax.plot(part['n'], part[column], ls, color=colour, marker=marker,
                     markersize=6, linewidth=1.5, label=label,
                     markeredgecolor=SURFACE, markeredgewidth=1)
+            if column == 'rounds':
+                ax.set_ylim(0, 60)
 
 
 def legend(fig, ax):
