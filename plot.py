@@ -57,8 +57,6 @@ def style_axes(ax, title, log_y):
         ax.set_yscale('log')
     else:
         ax.set_yscale('linear')
-        ax.set_ylim(0, None)
-        ax.yaxis.get_major_locator().set_params(integer=True)
     ax.set_xlabel('table size n (rows)', color=TEXT_2)
     ax.grid(True, which='major', color=GRID, linewidth=0.8)
     ax.set_axisbelow(True)
@@ -83,6 +81,8 @@ def draw(ax, df, column, title, log_y):
                     markeredgecolor=SURFACE, markeredgewidth=1)
             if column == 'rounds':
                 ax.set_ylim(0, 60)
+    if not log_y:
+        ax.set_ylim(bottom=0)
 
 
 def legend(fig, ax):
