@@ -6,3 +6,6 @@ matplotlib   # plot.py
 # for mpyc
 numpy
 gmpy2
+
+#plotting the results
+matplotlib
