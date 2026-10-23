@@ -18,7 +18,7 @@ and to run evetyrhing I would recommend
 pip install -r requirements.txt
 ```
 
-The initial table consists only of 100 entries of
+We use table full_table.csv with size of 2^24 of entries:
 
 - BSN: 9 digit Dutch citizen service number 
 - blood_type:  as one of 8 types
@@ -113,22 +113,34 @@ Confirm dependencies:
 ### run an experiment
 
  1. Create network
+ ```
 sudo .venv/bin/python -m network.cli setup
+```
 
  2. Configure conditions (example: Party 1, 50ms latency)
+ ```
 sudo .venv/bin/python -m network.cli set --party 1 --latency 50
+```
 
 3. Check configuration
+```
 sudo .venv/bin/python -m network.cli status
+```
 
  4. Run MPyC experiment
+ ```
 sudo .venv/bin/python -m network.launcher
+```
 
  5. Reset network conditions (optional)
+ ```
 sudo .venv/bin/python -m network.cli reset
+```
 
  6. Remove network when finished
+ ```
 sudo .venv/bin/python -m network.cli teardown
+```
 
 The network emulator creates three isolated network namespaces for the MPC
 parties. Each party has its own virtual interface and IP address, and traffic
