@@ -27,12 +27,25 @@ Confirm dependencies:
 
 ## run an experiment
 
-1. create the network
-2. configure conditions
-3. Inspect current settings
-4. launch the existing MpYC program: The launcher starts three instances of `linear.py` in `mpc0`, `mpc1`, and `mpc2`, using `.venv/bin/python`. The script and `table.xlsx` must be available relative to the repository working directory.
-5. Reset traffic shaping
-6. Remove all virtual networking
+ 1. Create network
+sudo .venv/bin/python -m network.cli setup
+
+ 2. Configure conditions (example: Party 1, 50ms latency)
+sudo .venv/bin/python -m network.cli set --party 1 --latency 50
+
+3. Check configuration
+sudo .venv/bin/python -m network.cli status
+
+ 4. Run MPyC experiment
+sudo .venv/bin/python -m network.launcher
+
+ 5. Reset network conditions (optional)
+sudo .venv/bin/python -m network.cli reset
+
+ 6. Remove network when finished
+sudo .venv/bin/python -m network.cli teardown
+
+
 
 
 
