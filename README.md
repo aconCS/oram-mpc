@@ -74,7 +74,7 @@ Useful options:
 
 Example, saving results for sizes up to 10 000:
 ```bash
-python benchmark.py -M3 --max-exp 4 --no-memory --csv results.csv --md results.md
+python benchmark.py -M3 --max-exp 4 --no-memory --csv results/results.csv --md results/results.md
 ```
 
 ### Output

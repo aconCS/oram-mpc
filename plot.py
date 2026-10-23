@@ -94,8 +94,11 @@ def legend(fig, ax):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument('csv', nargs='+', help='result files from benchmark.py --csv')
-    parser.add_argument('--out', default='results/plots', help='folder for the PNGs')
+    parser.add_argument('--out', default=None, help='folder for the PNGs')
     args = parser.parse_args()
+    if args.out is None:
+            first_csv = os.path.splitext(os.path.basename(args.csv[0]))[0]
+            args.out = f'results/{first_csv}_plots'
 
     df = load(args.csv)
     runs = list(dict.fromkeys(df['run']))
