@@ -36,17 +36,3 @@ Confirm dependencies:
 
 
 
-## Tests that aren't covered 
-
-- [ ] **Bandwidth:** Measure actual throughput with an appropriate tool (e.g., `iperf3`), across multiple configured bandwidth caps. Ping alone cannot validate throughput.
-- [ ] **Jitter:** Collect many RTT samples and check variability under nonzero jitter settings.
-- [ ] **Packet loss:** Send enough packets to estimate observed loss at several configured rates; test whether MPyC completes or fails gracefully.
-- [ ] **Party independence:** Change Party 1's settings and verify the `tc` configurations of Parties 0 and 2 are unchanged. Note that communication *with* Party 1 will still be affected.
-- [ ] **Directionality:** Confirm traffic shaping applies to **outgoing traffic** from each namespace. End-to-end RTT can reflect delay at both endpoints; one party's 50 ms egress delay produced ~50 ms additional ping RTT in the observed test.
-- [ ] **Combined conditions:** Test latency + jitter + loss + bandwidth together, including realistic and extreme profiles.
-- [ ] **MPyC integration:** Run the ORAM program under multiple network profiles; verify consistent outputs, completion, and sensible timing differences.
-- [ ] **Lifecycle:** Verify `status`, `reset`, `teardown`, clean recreation, and behavior after a failed/partial `setup`.
-- [ ] **Validation:** Check invalid party IDs, negative values, zero bandwidth, loss outside 0–100%, missing namespaces, and missing Linux tools.
-- [ ] **Portability:** Confirm operation on the intended Linux/WSL2 environments, including virtual-environment dependency resolution and root permissions.
-
-
