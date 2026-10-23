@@ -102,8 +102,8 @@ machine (more with memory tracking on), roughly 10x more per step. Start small a
 
 `plot.py` turns one or more result CSVs into charts (log-log, cost against n):
 ```bash
-python plot.py results.csv                      # writes plots/*.png
-python plot.py local.csv wan.csv --out plots    # compare up to 4 runs
+python plot.py results/results.csv                      # writes plots/*.png
+python plot.py results/local.csv results/wan.csv --out plots    # compare up to 4 runs
 ```
 
 It writes one PNG per metric (`time_ms.png`, `sent_kib.png`, `rounds.png`, `peak_kib.png`)
