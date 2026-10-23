@@ -11,7 +11,7 @@ or one terminal per party, as with linear.py:
     python benchmark.py -M3 -I1 --sizes 10 100
     python benchmark.py -M3 -I2 --sizes 10 100
 
-Under the network emulator (see networksetup.md):
+Under the network emulator (see README):
     sudo .venv/bin/python -m network.launcher benchmark.py --sizes 10 100
 
 Party 0 prints the results and can save them with --csv (for scripts, see
