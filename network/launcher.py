@@ -1,9 +1,9 @@
-
+import argparse
 import os
 import subprocess
 
 
-def launch(script="linear.py", parties=3, base_port=11365):
+def launch(script="linear.py", script_args = None, parties=3,  base_port=11365):
     addresses = [
         f"10.10.0.{10 + i}:{base_port + i}"
         for i in range(parties)
@@ -41,4 +41,7 @@ def launch(script="linear.py", parties=3, base_port=11365):
 
 
 if __name__ == "__main__":
-    launch()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("script", nargs="?", default="linear.py")
+    args, script_args = parser.parse_known_args()
+    launch(args.script, script_args)
