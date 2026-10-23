@@ -23,6 +23,8 @@ def launch(script="linear.py", script_args = None, parties=3,  base_port=11365):
             for address in addresses:
                 command.extend(["-P", address])
 
+            command.extend(script_args or [])
+
             processes.append(subprocess.Popen(command))
 
         exit_codes = [process.wait() for process in processes]
