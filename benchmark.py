@@ -14,10 +14,13 @@ or one terminal per party, as with linear.py:
 Under the network emulator (see networksetup.md):
     sudo .venv/bin/python -m network.launcher benchmark.py --sizes 10 100
 
-Party 0 prints the results and optionally writes them to --csv.
+Party 0 prints the results and can save them with --csv (for scripts, see
+plot.py) and --md (a readable report). Units are the same everywhere:
+time in ms, data sent and peak memory in KiB.
 """
 import argparse
 import csv
+import datetime
 import random
 import statistics
 
@@ -29,10 +32,18 @@ from linear import (BLOOD, secint, read_columns, share_columns, lookup_by_index,
 
 OWNER = 0     # holds the table
 CLIENT = 0    # makes the queries
-FIELDS = ['n', 'op', 'time', 'bytes', 'messages', 'rounds', 'peak_mem']
-
-
 TABLE = 'full_table.csv'
+
+# output columns: (name, header in terminal/markdown, format)
+COLUMNS = [
+    ('n',          'n',           '{}'),
+    ('op',         'op',          '{}'),
+    ('time_ms',    'time (ms)',   '{:.1f}'),
+    ('sent_kib',   'sent (KiB)',  '{:.2f}'),
+    ('messages',   'messages',    '{}'),
+    ('rounds',     'rounds',      '{}'),
+    ('peak_kib',   'peak (KiB)',  '{:.1f}'),
+]
 
 
 def secret(value):
@@ -63,7 +74,7 @@ async def bench(args):
         async with metrics.Measure(args.memory) as m:
             K, V = await share_columns(keys, vals, owner=OWNER)
             await mpc.gather(K, V)
-        rows.append({'n': n, 'op': 'setup', **await metrics.combine(m.stats)})
+        rows.append(in_units(n, 'setup', await metrics.combine(m.stats)))
         if mpc.pid == 0:
             print(fmt(rows[-1]), flush=True)
 
@@ -74,18 +85,77 @@ async def bench(args):
                 async with metrics.Measure(args.memory) as m:
                     await mpc.gather(OPS[op](K, V, i, keys[i], rng.randrange(len(BLOOD))))
                 runs.append(await metrics.combine(m.stats))
-            row = {'n': n, 'op': op, **runs[0]}
-            row['time'] = statistics.median(r['time'] for r in runs)
-            row['peak_mem'] = max(r['peak_mem'] for r in runs)
+            stats = dict(runs[0])   # bytes, messages, rounds are the same every run
+            stats['time'] = statistics.median(r['time'] for r in runs)
+            stats['peak_mem'] = max(r['peak_mem'] for r in runs)
+            row = in_units(n, op, stats)
             rows.append(row)
             if mpc.pid == 0:
                 print(fmt(row), flush=True)
     return rows
 
 
+def in_units(n, op, stats):
+    # metrics gives seconds and bytes, convert to the output units
+    return {
+        'n': n,
+        'op': op,
+        'time_ms': round(stats['time'] * 1000, 3),
+        'sent_kib': round(stats['bytes'] / 1024, 3),
+        'messages': stats['messages'],
+        'rounds': stats['rounds'],
+        'peak_kib': round(stats['peak_mem'] / 1024, 3),
+    }
+
+
+WIDTHS = [7, 16, 10, 12, 9, 7, 11]
+
+
 def fmt(row):
-    return (f"{row['n']:>7} {row['op']:<16} {row['time']*1000:>10.1f} {row['bytes']:>12} "
-            f"{row['messages']:>9} {row['rounds']:>7} {row['peak_mem']/1024:>11.1f}")
+    cells = [f.format(row[name]) for name, _, f in COLUMNS]
+    return ' '.join(c.ljust(w) if name == 'op' else c.rjust(w)
+                    for c, w, (name, _, _) in zip(cells, WIDTHS, COLUMNS))
+
+
+def header():
+    return ' '.join(h.ljust(w) if name == 'op' else h.rjust(w)
+                    for w, (name, h, _) in zip(WIDTHS, COLUMNS))
+
+
+def write_csv(path, rows):
+    with open(path, 'w', newline='') as f:
+        writer = csv.DictWriter(f, fieldnames=[name for name, _, _ in COLUMNS])
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def write_md(path, rows, args):
+    md = lambda cells: '| ' + ' | '.join(cells) + ' |'
+    lines = [
+        '# Linear ORAM benchmark',
+        '',
+        f"- date: {datetime.datetime.now():%Y-%m-%d %H:%M}",
+        f'- parties: {len(mpc.parties)}',
+        f"- table: `{args.table}`, sizes: {', '.join(map(str, args.sizes))}",
+        f'- repeat: {args.repeat} (time is the median), seed: {args.seed}',
+        f"- memory tracking: {'on' if args.memory else 'off'}",
+        '- time and peak memory: slowest party; sent and messages: sum over all parties',
+        '',
+        '## All results',
+        '',
+        md([h for _, h, _ in COLUMNS]),
+        md(['---:' if name != 'op' else '---' for name, _, _ in COLUMNS]),
+    ]
+    lines += [md([f.format(r[name]) for name, _, f in COLUMNS]) for r in rows]
+
+    # time per size, one column per op, to compare growth at a glance
+    ops = list(dict.fromkeys(r['op'] for r in rows))
+    times = {(r['n'], r['op']): r['time_ms'] for r in rows}
+    lines += ['', '## Time (ms) per size', '', md(['n'] + ops), md(['---:'] * (len(ops) + 1))]
+    lines += [md([str(n)] + [f'{times[n, op]:.1f}' for op in ops]) for n in args.sizes]
+
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write('\n'.join(lines) + '\n')
 
 
 async def main():
@@ -101,6 +171,7 @@ async def main():
     parser.add_argument('--no-memory', dest='memory', action='store_false',
                         help='skip tracemalloc (it slows Python down, so times are more accurate)')
     parser.add_argument('--csv', help='write results to this CSV file (party 0)')
+    parser.add_argument('--md', help='write a Markdown report to this file (party 0)')
     args = parser.parse_args()
     if args.sizes is None:
         args.sizes = [10**k for k in range(args.max_exp + 1)]
@@ -110,17 +181,17 @@ async def main():
     if mpc.pid == 0:
         print(f'Linear ORAM benchmark, {len(mpc.parties)} parties, '
               f'time = median of {args.repeat}, totals over all parties')
-        print(f"{'n':>7} {'op':<16} {'time (ms)':>10} {'bytes':>12} {'messages':>9} "
-              f"{'rounds':>7} {'peak (KiB)':>11}")
+        print(header())
     rows = await bench(args)
     await mpc.shutdown()
 
-    if mpc.pid == 0 and args.csv:
-        with open(args.csv, 'w', newline='') as f:
-            writer = csv.DictWriter(f, fieldnames=FIELDS)
-            writer.writeheader()
-            writer.writerows(rows)
-        print(f'Wrote {args.csv}')
+    if mpc.pid == 0:
+        if args.csv:
+            write_csv(args.csv, rows)
+            print(f'Wrote {args.csv}')
+        if args.md:
+            write_md(args.md, rows, args)
+            print(f'Wrote {args.md}')
 
 
 if __name__ == '__main__':

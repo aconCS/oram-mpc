@@ -1,6 +1,7 @@
 mpyc
 pandas
 openpyxl
+matplotlib   # plot.py
 
 # for mpyc
 numpy

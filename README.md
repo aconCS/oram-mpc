@@ -66,20 +66,50 @@ Useful options:
 | `--sizes 16 32 64` | explicit sizes, overrides `--max-exp` | |
 | `--ops lookup_by_key ...` | only run these operations | all four |
 | `--repeat r` | runs per operation, median time is reported | 3 |
-| `--no-memory` | skip memory tracking (more accurate times) | |
-| `--csv results.csv` | save the results (written by party 0) | |
+| `--seed s` | seed for which rows are queried and what is written | 1 |
+| `--no-memory` | skip memory tracking (it slows Python down, so times are more accurate) | |
+| `--csv results.csv` | save the results as CSV, for scripts and `plot.py` | |
+| `--md results.md` | save a readable Markdown report | |
 | `--table file.csv` | another table with `bsn` and `blood_code` columns | `full_table.csv` |
 
 Example, saving results for sizes up to 10 000:
 ```bash
-python benchmark.py -M3 --max-exp 4 --no-memory --csv results.csv
+python benchmark.py -M3 --max-exp 4 --no-memory --csv results.csv --md results.md
 ```
 
-Output columns: `time` (slowest party, ms), `bytes` and `messages` (sum over all parties),
-`rounds` (sequential communication rounds), `peak` (largest Python heap growth of any party).
+### Output
+
+The terminal, the CSV and the Markdown report use the same columns and units:
+
+| column (CSV name) | meaning |
+|---|---|
+| `n` | table size in rows |
+| `op` | `setup` (secret-sharing the table) or one of the four ORAM operations |
+| `time_ms` | wall-clock time of the slowest party, median over `--repeat` runs, in ms |
+| `sent_kib` | data sent, summed over all parties, in KiB |
+| `messages` | messages sent, summed over all parties |
+| `rounds` | sequential communication rounds (each costs one network round-trip) |
+| `peak_kib` | largest Python memory growth of any party, in KiB (0 with `--no-memory`) |
+
+The Markdown report starts with the run settings (date, parties, sizes, repeat, seed),
+then has the full table and a smaller "time per size" table with one column per operation.
 
 Key operations do n secure comparisons, so they get slow fast: about 1 s at n = 1000 on one
-machine, roughly 10x more per step. Start small and raise `--max-exp` step by step.
+machine (more with memory tracking on), roughly 10x more per step. Start small and raise
+`--max-exp` step by step.
+
+### Plots
+
+`plot.py` turns one or more result CSVs into charts (log-log, cost against n):
+```bash
+python plot.py results.csv                      # writes plots/*.png
+python plot.py local.csv wan.csv --out plots    # compare up to 4 runs
+```
+
+It writes one PNG per metric (`time_ms.png`, `sent_kib.png`, `rounds.png`, `peak_kib.png`)
+and `overview.png` with all of them. Colour and marker show the operation, line style shows
+the run (the CSV file name), so name the files after what differs, e.g. the network setting.
+The memory chart is skipped when the run used `--no-memory`.
 
 ## TODOs 
 - check bigger datasets (and write down size + time), 
