@@ -44,6 +44,7 @@ def launch(script="linear.py", script_args = None, parties=3,  base_port=11365):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument("--parties", type=int, default=3)
     parser.add_argument("script", nargs="?", default="linear.py")
     args, script_args = parser.parse_known_args()
-    launch(args.script, script_args)
+    launch(args.script, script_args, parties=args.parties)

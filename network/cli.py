@@ -5,6 +5,7 @@ from .emulator import NetworkEmulator
 
 def main():
     parser = argparse.ArgumentParser(description="MPC Network Emulator")
+    parser.add_argument("--parties", type=int, default=3)
     commands = parser.add_subparsers(dest="command", required=True)
 
     commands.add_parser("setup")
@@ -20,7 +21,7 @@ def main():
     configure.add_argument("--loss", type=float, default=0)
 
     args = parser.parse_args()
-    emulator = NetworkEmulator()
+    emulator = NetworkEmulator(parties=args.parties)
 
     if args.command == "setup":
         emulator.setup()
